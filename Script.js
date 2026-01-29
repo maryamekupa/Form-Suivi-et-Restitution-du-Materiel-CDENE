@@ -877,4 +877,5 @@ const btnSendEmail = document.getElementById('btnSendEmail');
 if (btnSendEmail) {
   btnSendEmail.addEventListener('click', envoyerParEmail);
 }
+
 ``
