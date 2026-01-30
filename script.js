@@ -797,51 +797,67 @@ async function genererPDFGlobal() {
     const element = document.getElementById('formMateriel');
     if (!element) return;
 
-    // --- 1. PRÉPARATION DES STYLES (ÉCRAN -> CAPTURE) ---
+    // --- 1. PRÉPARATION DES STYLES ET NETTOYAGE ---
     const originalStyle = element.style.cssText;
+    const inputs = element.querySelectorAll('input, textarea');
+    const originalPlaceholders = [];
+
+    // Sauvegarder et vider les placeholders si le champ est vide
+    inputs.forEach(input => {
+      originalPlaceholders.push({ el: input, txt: input.placeholder });
+      if (!input.value.trim()) {
+        input.placeholder = ""; 
+      }
+    });
     
-    // Uniformiser le fond et protéger le contour vert
+    // Uniformiser le fond pour la capture
     element.style.boxShadow = 'none'; 
     element.style.margin = '0';
     element.style.padding = '20px'; 
     element.style.width = '1000px'; 
-    element.style.backgroundColor = '#c9d9e8'; // Même couleur que le formulaire
+    element.style.backgroundColor = '#c9d9e8';
 
     // --- 2. TRANSFORMATION DU TEXTAREA EN "FICHE" ---
-    // On cible spécifiquement le textarea de Réserves
     const reserveTextarea = document.querySelector('.reserve-textarea');
     let tempDiv = null;
 
     if (reserveTextarea) {
         tempDiv = document.createElement('div');
-        tempDiv.innerText = reserveTextarea.value || reserveTextarea.placeholder;
+        tempDiv.innerText = reserveTextarea.value || ""; // Ne pas afficher le placeholder ici non plus
         
-        // Copier le style pour un rendu texte propre
         tempDiv.style.width = reserveTextarea.offsetWidth + 'px';
         tempDiv.style.fontSize = window.getComputedStyle(reserveTextarea).fontSize;
         tempDiv.style.fontFamily = window.getComputedStyle(reserveTextarea).fontFamily;
         tempDiv.style.color = "#222";
-        tempDiv.style.whiteSpace = "pre-wrap"; // Important pour voir toutes les lignes
+        tempDiv.style.whiteSpace = "pre-wrap";
         tempDiv.style.background = "transparent";
         tempDiv.style.border = "none";
         tempDiv.style.padding = "0";
         tempDiv.style.marginBottom = "20px";
 
-        // Masquer le textarea et insérer le texte pur
         reserveTextarea.style.display = 'none';
         reserveTextarea.parentNode.insertBefore(tempDiv, reserveTextarea);
     }
 
     // --- 3. CAPTURE HAUTE DÉFINITION ---
+    // On utilise scrollHeight pour être certain de prendre toute la hauteur, même si c'est long
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
-      backgroundColor: '#c9d9e8', // Remplit les bords extérieurs
-      logging: false
+      backgroundColor: '#c9d9e8',
+      logging: false,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight 
     });
 
-    // --- 4. RESTAURATION DE L'INTERFACE UTILISATEUR ---
+    // --- 4. RESTAURATION DE L'INTERFACE ---
     element.style.cssText = originalStyle;
+    
+    // Restaurer les placeholders pour l'utilisateur
+    originalPlaceholders.forEach(item => {
+      item.el.placeholder = item.txt;
+    });
+
     if (reserveTextarea && tempDiv) {
         reserveTextarea.style.display = 'block';
         tempDiv.remove();
@@ -849,19 +865,21 @@ async function genererPDFGlobal() {
 
     // --- 5. CRÉATION DU PDF ---
     const imgData = canvas.toDataURL('image/png');
-    const pdfWidth = 595.28; // Largeur A4 (pt)
-    const margin = 15; // Marge de sécurité
+    const pdfWidth = 595.28; // A4 point width
+    const margin = 15;
     const usableWidth = pdfWidth - (margin * 2);
+    
+    // Calcul de la hauteur proportionnelle
     const imgHeight = (canvas.height * usableWidth) / canvas.width;
 
-    // Créer le PDF (hauteur adaptée au contenu)
+    // Création du PDF avec une hauteur dynamique pour éviter les coupures
     const pdf = new jsPDF('p', 'pt', [pdfWidth, imgHeight + (margin * 2)]);
 
-    // Peindre le fond du PDF avec la couleur bleu-gris (#c9d9e8 -> 201,217,232)
+    // Fond bleu-gris
     pdf.setFillColor(201, 217, 232); 
     pdf.rect(0, 0, pdfWidth, pdf.internal.pageSize.getHeight(), 'F');
 
-    // Poser l'image centrée (X=15, Y=15)
+    // Image centrée
     pdf.addImage(imgData, 'PNG', margin, margin, usableWidth, imgHeight);
     
     pdf.save('Formulaire_CDENE_vrf.pdf');
@@ -871,11 +889,3 @@ async function genererPDFGlobal() {
     alert("Une erreur est survenue lors de la création du PDF.");
   }
 }
-
-// Ajouter l'écouteur pour le bouton Envoyer par Email
-const btnSendEmail = document.getElementById('btnSendEmail');
-if (btnSendEmail) {
-  btnSendEmail.addEventListener('click', envoyerParEmail);
-}
-
-``
