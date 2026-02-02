@@ -306,7 +306,7 @@ function createMaterielSubBlock(actionId, role) {
   const etatDiv = document.createElement('div');
   etatDiv.style.marginTop = '8px';
   etatDiv.style.display = 'none';
-  etatDiv.innerHTML = '<label>État</label><select><option value="">-- Sélectionner --</option><option value="Bon">Bon</option><option value="Moyen">Moyen</option><option value="Mauvais">Mauvais</option></select>';
+  etatDiv.innerHTML = '<label>État</label><select><option value="">-- Sélectionner --</option><option value="Bon">Endommagé</option><option value="Moyen">En bon état</option><option value="Mauvais">En réparation </option></select>';
   fieldsContainer.appendChild(etatDiv);
 
   const commentDiv = document.createElement('div');
@@ -889,3 +889,4 @@ async function genererPDFGlobal() {
     alert("Une erreur est survenue lors de la création du PDF.");
   }
 }
+
