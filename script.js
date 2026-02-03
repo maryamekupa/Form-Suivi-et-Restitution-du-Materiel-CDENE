@@ -288,7 +288,7 @@ function createMaterielSubBlock(actionId, role) {
   const nomDiv = document.createElement('div');
   nomDiv.style.marginTop = '8px';
   nomDiv.style.display = 'none';
-  nomDiv.innerHTML = '<label>Nom de l\'ordinateur (si applicable)</label><input type="text">';
+  nomDiv.innerHTML = '<label>Nom (celui du Pc dans système)</label><input type=\"test\">";
   fieldsContainer.appendChild(nomDiv);
 
   const serieDiv = document.createElement('div');
@@ -568,12 +568,17 @@ function createRetourCheckboxBlock(actionId) {
 
 function handleRetourActionToggle(checkbox, tablesContainer, actionId) {
   const type = checkbox.dataset.type;
-  const blockId = `retourActionTable-${actionId}-${type}`;
+  const blockId = `retourInline-${actionId}-${type}`;
+  const anchor = checkbox.closest('label');
   if (checkbox.checked) {
     if (!document.getElementById(blockId)) {
-      const block = createRetourActionTable(type, actionId);
+      const block = createRetourInlineFields(type, actionId);
       block.id = blockId;
-      tablesContainer.appendChild(block);
+      if (anchor && anchor.parentNote) {
+        anchor.inserAdjacentElement('afterend', block);
+      } else if (tablesContainer) {
+        tablesContainer.appendChild(block);
+      }
     }
   } else {
     const b = document.getElementById(blockId);
@@ -581,6 +586,89 @@ function handleRetourActionToggle(checkbox, tablesContainer, actionId) {
   }
 }
 
+function createRetournInlineFields(type, actionId) {
+  const container = document.createElement('div');
+  container.className = 'retour-inline-fields';
+  container.dataset.type = type;
+  container.dataset.actionId =actionId;
+
+  const title = document.createElement('div');
+  title.className ='retour-inline-title';
+  const label =(attributionTypes && attributionTypes[type] && attributionTypes[type].label) ? attributionTypes[type].label : type;
+  title.textContent = `D\u00e9tails-${label}`;
+  container.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'retour-inline-grid';
+  container.appendChild(grid);
+
+  const marqueDiv = document.createElement('div');
+  marqueDiv.innerHTML ='<label>Marque</label><input type-"text">';
+  grid.appendChild(marqueDiv);
+
+  const nomDiv = document.createElement('div');
+  nomDiv.className = 'retour-field';
+  nomDiv.innerHTML = "<label>Nom de l'ordinateur (si applicable)</label><input type=\"text\">";
+  grid.appendChild(nomDiv);
+
+  const serieDiv = document.createElement('div');
+  serieDiv.className = 'retour-field';
+  serieDiv.innerHTML = '<label>N\u00b0 de s\u00e9rie</label><input type="text">';
+  grid.appendChild(serieDiv);
+
+  const quantiteDiv = document.createElement('div');
+  quantiteDiv.className = 'retour-field';
+  quantiteDiv.innerHTML = '<label>Quantit\u00e9</label><input type="number" min="1" value="1" style="width:80px;">';
+  grid.appendChild(quantiteDiv);
+
+  const etatDiv = document.createElement('div');
+  etatDiv.className = 'retour-field';
+  etatDiv.innerHTML = '<label>\u00c9tat</label><select><option value="">-- S\u00e9lectionner --</option><option value="Bon">Bon</option><option value="Moyen">Moyen</option><option value="Mauvais">Mauvais</option></select>';
+  grid.appendChild(etatDiv);
+
+  const commentDiv = document.createElement('div');
+  commentDiv.className = 'retour-field field-full';
+  commentDiv.innerHTML = '<label>Commentaire</label><textarea style="width:100%;min-height:60px;"></textarea>';
+  grid.appendChild(commentDiv);
+
+  const fieldConfig = {
+    'Cles': { marque: false, nom: false, serie: false, quantite: true, etat: false, comment: false },
+    'Badge': { marque: false, nom: false, serie: false, quantite: true, etat: false, comment: false },
+    'LigneTel': { marque: true, nom: false, serie: true, quantite: false, etat: true, comment: true },
+    'Laptop': { marque: true, nom: true, serie: true, quantite: false, etat: true, comment: true },
+    'Moniteur': { marque: true, nom: false, serie: true, quantite: false, etat: true, comment: true },
+    'Tablette': { marque: true, nom: false, serie: true, quantite: false, etat: true, comment: true },
+    'Accessoire': { marque: true, nom: true, serie: true, quantite: false, etat: true, comment: true },
+    'Autres': { marque: true, nom: true, serie: true, quantite: false, etat: true, comment: true }
+  };
+
+  const fieldRefs = [
+    { key: 'marque', wrapper: marqueDiv, input: marqueDiv.querySelector('input') },
+    { key: 'nom', wrapper: nomDiv, input: nomDiv.querySelector('input') },
+    { key: 'serie', wrapper: serieDiv, input: serieDiv.querySelector('input') },
+    { key: 'quantite', wrapper: quantiteDiv, input: quantiteDiv.querySelector('input') },
+    { key: 'etat', wrapper: etatDiv, input: etatDiv.querySelector('select') },
+    { key: 'comment', wrapper: commentDiv, input: commentDiv.querySelector('textarea') }
+  ];
+
+  function setFieldState(wrapper, input, enabled) {
+    if (!wrapper || !input) return;
+    wrapper.classList.toggle('field-disabled', !enabled);
+    input.disabled = !enabled;
+    if (!enabled) {
+      input.value = '';
+    }
+  }
+
+  const config = fieldConfig[type];
+  if (!config) {
+    fieldRefs.forEach(f => setFieldState(f.wrapper, f.input, false));
+  } else {
+    fieldRefs.forEach(f => setFieldState(f.wrapper, f.input, !!config[f.key]));
+  }
+
+  return container;
+}
 
 function createReturnTable(type) {
   const cfg = returnConfig[type];
@@ -889,4 +977,5 @@ async function genererPDFGlobal() {
     alert("Une erreur est survenue lors de la création du PDF.");
   }
 }
+
 
