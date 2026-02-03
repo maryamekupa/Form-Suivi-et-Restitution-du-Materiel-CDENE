@@ -421,16 +421,16 @@ div[style*="margin-top:auto"] {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 4px 8px;
-  background: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 2px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   font-size: 0.85rem; /* Texte légèrement plus petit */
   transition: background 0.2s;
 }
 
 .checkbox-item:hover {
-  background: #f0f0f0;
+  background: transparent;
 }
 
 /* Champs inline pour restitution */
@@ -441,7 +441,7 @@ div[style*="margin-top:auto"] {
   padding: 10px;
   border: 1px solid #b8d5e8;
   border-radius: 6px;
-  background: #f9fcff;
+  background: #fef9f0;
 }
 .retour-inline-title {
   font-weight: 700;
