@@ -280,46 +280,46 @@ function createMaterielSubBlock(actionId, role) {
   const fieldsContainer = document.createElement('div');
 
   const marqueDiv = document.createElement('div');
+  marqueDiv.className = 'materiel-field';
   marqueDiv.style.marginTop = '8px';
-  marqueDiv.style.display = 'none';
   marqueDiv.innerHTML = '<label>Marque</label><input type="text">';
   fieldsContainer.appendChild(marqueDiv);
 
   const nomDiv = document.createElement('div');
+  nomDiv.className = 'materiel-field';
   nomDiv.style.marginTop = '8px';
-  nomDiv.style.display = 'none';
-  nomDiv.innerHTML = '<label>Nom (celui du Pc dans système)</label><input type=\"test\">";
+  nomDiv.innerHTML = "<label>Nom de l'ordinateur (si applicable)</label><input type=\"text\">";
   fieldsContainer.appendChild(nomDiv);
 
   const serieDiv = document.createElement('div');
+  serieDiv.className = 'materiel-field';
   serieDiv.style.marginTop = '8px';
-  serieDiv.style.display = 'none';
-  serieDiv.innerHTML = '<label>N° de série</label><input type="text">';
+  serieDiv.innerHTML = '<label>N\u00b0 de s\u00e9rie</label><input type="text">';
   fieldsContainer.appendChild(serieDiv);
 
   const quantiteDiv = document.createElement('div');
+  quantiteDiv.className = 'materiel-field';
   quantiteDiv.style.marginTop = '8px';
-  quantiteDiv.style.display = 'none';
-  quantiteDiv.innerHTML = '<label>Quantité</label><input type="number" min="1" value="1" style="width:80px;">';
+  quantiteDiv.innerHTML = '<label>Quantit\u00e9</label><input type="number" min="1" value="1" style="width:80px;">';
   fieldsContainer.appendChild(quantiteDiv);
 
   const etatDiv = document.createElement('div');
+  etatDiv.className = 'materiel-field';
   etatDiv.style.marginTop = '8px';
-  etatDiv.style.display = 'none';
-  etatDiv.innerHTML = '<label>État</label><select><option value="">-- Sélectionner --</option><option value="Bon">Endommagé</option><option value="Moyen">En bon état</option><option value="Mauvais">En réparation </option></select>';
+  etatDiv.innerHTML = '<label>\u00c9tat</label><select><option value="">-- S\u00e9lectionner --</option><option value="Bon">Bon</option><option value="Moyen">Moyen</option><option value="Mauvais">Mauvais</option></select>';
   fieldsContainer.appendChild(etatDiv);
 
   const commentDiv = document.createElement('div');
+  commentDiv.className = 'materiel-field';
   commentDiv.style.marginTop = '8px';
-  commentDiv.style.display = 'none';
   commentDiv.innerHTML = '<label>Commentaire</label><textarea style="width:100%;min-height:60px;"></textarea>';
   fieldsContainer.appendChild(commentDiv);
 
   container.appendChild(fieldsContainer);
 
   const fieldConfig = {
-    'Cles': { marque: false, nom: false, serie: false, quantite: true, etat: true, comment: true },
-    'Badge': { marque: false, nom: false, serie: false, quantite: true, etat: true, comment: true },
+    'Cles': { marque: false, nom: false, serie: false, quantite: true, etat: false, comment: false },
+    'Badge': { marque: false, nom: false, serie: false, quantite: true, etat: false, comment: false },
     'LigneTel': { marque: true, nom: false, serie: true, quantite: false, etat: true, comment: true },
     'Laptop': { marque: true, nom: true, serie: true, quantite: false, etat: true, comment: true },
     'Moniteur': { marque: true, nom: false, serie: true, quantite: false, etat: true, comment: true },
@@ -328,19 +328,47 @@ function createMaterielSubBlock(actionId, role) {
     'Autres': { marque: true, nom: true, serie: true, quantite: false, etat: true, comment: true }
   };
 
-  typeSelect.addEventListener('change', function() {
-    const config = fieldConfig[this.value];
-    if (config) {
-      marqueDiv.style.display = config.marque ? 'block' : 'none';
-      nomDiv.style.display = config.nom ? 'block' : 'none';
-      serieDiv.style.display = config.serie ? 'block' : 'none';
-      quantiteDiv.style.display = config.quantite ? 'block' : 'none';
-      etatDiv.style.display = config.etat ? 'block' : 'none';
-      commentDiv.style.display = config.comment ? 'block' : 'none';
-    } else {
-      [marqueDiv, nomDiv, serieDiv, quantiteDiv, etatDiv, commentDiv].forEach(d => d.style.display = 'none');
+  const fieldRefs = [
+    { key: 'marque', wrapper: marqueDiv, input: marqueDiv.querySelector('input') },
+    { key: 'nom', wrapper: nomDiv, input: nomDiv.querySelector('input') },
+    { key: 'serie', wrapper: serieDiv, input: serieDiv.querySelector('input') },
+    { key: 'quantite', wrapper: quantiteDiv, input: quantiteDiv.querySelector('input') },
+    { key: 'etat', wrapper: etatDiv, input: etatDiv.querySelector('select') },
+    { key: 'comment', wrapper: commentDiv, input: commentDiv.querySelector('textarea') }
+  ];
+
+  function setFieldState(wrapper, input, enabled) {
+    if (!wrapper || !input) return;
+    wrapper.classList.toggle('field-disabled', !enabled);
+    input.disabled = !enabled;
+    if (!enabled) {
+      input.value = '';
     }
+  }
+
+  function applyTypeConfig(typeValue) {
+    const config = fieldConfig[typeValue];
+    if (!config) {
+      fieldRefs.forEach(f => setFieldState(f.wrapper, f.input, false));
+      return;
+    }
+    fieldRefs.forEach(f => {
+      setFieldState(f.wrapper, f.input, !!config[f.key]);
+    });
+  }
+
+  typeSelect.addEventListener('change', function() {
+    applyTypeConfig(this.value);
   });
+
+  applyTypeConfig(typeSelect.value);
+  // Signatures
+  const sigDiv = document.createElement('div');
+  sigDiv.className = 'two-col';
+  sigDiv.style.marginTop = '12px';
+  sigDiv.innerHTML = '<div><label style="font-weight:bold;">Signature de l\'employé</label><input type="text"></div><div><label style="font-weight:bold;">Signature du gestionnaire</label><input type="text"></div>';
+  container.appendChild(sigDiv);
+
 
   return container;
 }
@@ -574,8 +602,8 @@ function handleRetourActionToggle(checkbox, tablesContainer, actionId) {
     if (!document.getElementById(blockId)) {
       const block = createRetourInlineFields(type, actionId);
       block.id = blockId;
-      if (anchor && anchor.parentNote) {
-        anchor.inserAdjacentElement('afterend', block);
+      if (anchor && anchor.parentNode) {
+        anchor.insertAdjacentElement('afterend', block);
       } else if (tablesContainer) {
         tablesContainer.appendChild(block);
       }
@@ -586,16 +614,16 @@ function handleRetourActionToggle(checkbox, tablesContainer, actionId) {
   }
 }
 
-function createRetournInlineFields(type, actionId) {
+function createRetourInlineFields(type, actionId) {
   const container = document.createElement('div');
   container.className = 'retour-inline-fields';
   container.dataset.type = type;
-  container.dataset.actionId =actionId;
+  container.dataset.actionId = actionId;
 
   const title = document.createElement('div');
-  title.className ='retour-inline-title';
-  const label =(attributionTypes && attributionTypes[type] && attributionTypes[type].label) ? attributionTypes[type].label : type;
-  title.textContent = `D\u00e9tails-${label}`;
+  title.className = 'retour-inline-title';
+  const label = (attributionTypes && attributionTypes[type] && attributionTypes[type].label) ? attributionTypes[type].label : type;
+  title.textContent = `D\u00e9tails - ${label}`;
   container.appendChild(title);
 
   const grid = document.createElement('div');
@@ -603,7 +631,8 @@ function createRetournInlineFields(type, actionId) {
   container.appendChild(grid);
 
   const marqueDiv = document.createElement('div');
-  marqueDiv.innerHTML ='<label>Marque</label><input type-"text">';
+  marqueDiv.className = 'retour-field';
+  marqueDiv.innerHTML = '<label>Marque</label><input type="text">';
   grid.appendChild(marqueDiv);
 
   const nomDiv = document.createElement('div');
@@ -930,7 +959,7 @@ async function genererPDFGlobal() {
     // --- 3. CAPTURE HAUTE DÉFINITION ---
     // On utilise scrollHeight pour être certain de prendre toute la hauteur, même si c'est long
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       backgroundColor: '#c9d9e8',
       logging: false,
@@ -952,7 +981,7 @@ async function genererPDFGlobal() {
     }
 
     // --- 5. CRÉATION DU PDF ---
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/png', 1.0);
     const pdfWidth = 595.28; // A4 point width
     const margin = 15;
     const usableWidth = pdfWidth - (margin * 2);
@@ -961,21 +990,33 @@ async function genererPDFGlobal() {
     const imgHeight = (canvas.height * usableWidth) / canvas.width;
 
     // Création du PDF avec une hauteur dynamique pour éviter les coupures
-    const pdf = new jsPDF('p', 'pt', [pdfWidth, imgHeight + (margin * 2)]);
+    const pdf = new jsPDF({
+    orientation: 'p',
+    unit: 'pt',
+    format: [pdfWidth, imgHeight + (margin * 2)],
+    compress: true
+   });
 
     // Fond bleu-gris
     pdf.setFillColor(201, 217, 232); 
     pdf.rect(0, 0, pdfWidth, pdf.internal.pageSize.getHeight(), 'F');
 
     // Image centrée
-    pdf.addImage(imgData, 'PNG', margin, margin, usableWidth, imgHeight);
-    
-    pdf.save('Formulaire_CDENE_vrf.pdf');
+    pdf.addImage(
+  imgData,
+  'PNG',
+  margin,
+  margin,
+  usableWidth,
+  imgHeight,
+  undefined,
+  'FAST' // 👈 meilleur rendu / moins de perte
+);
+
+    pdf.save('Form_Attribution-Materiel.pdf');
 
   } catch (error) {
     console.error('Erreur lors de la génération du PDF:', error);
     alert("Une erreur est survenue lors de la création du PDF.");
   }
 }
-
-
